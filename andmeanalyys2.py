@@ -32,7 +32,7 @@ print("unique values:", df['deficiency_code'].nunique())
 print("\ndata types:")
 print(df.dtypes)
 
-# metadata näitas mulle kätte tulbad vigadega out.json andmestikus, puhastan järgmised vead: 
+# metadata näitas mulle kätte tulbad vigadega out.json andmestikus, hakkan järjest puhastama: 
 
 # O-st nullid https://www.geeksforgeeks.org/data-analysis/python-pandas-dataframe-replace/                                                                     
 df['deficiency_code'] = df['deficiency_code'].replace('O', '0')
@@ -42,9 +42,10 @@ df['deficiency_description'] = df['deficiency_description'].str.strip()
 
 # Kõik tähed suureks, et kuju oleks sama https://www.geeksforgeeks.org/pandas/python-pandas-series-str-lower-upper-and-title/
 df['deficiency_description'] = df['deficiency_description'].str.upper()
+df['deficiency_category'] = df['deficiency_category'].str.upper()
 
 # Leidsin probleemi, et kood leidis kõige kallimad kulud, aga mitte keskmised. Seetõttu kasutan Regexit, et eemaldada tekstilised erisused. https://www.geeksforgeeks.org/pandas/replace-values-in-pandas-dataframe-using-regex/
-# Terminal andis "float" errorit, seega leidsin sellele lahenduse https://www.statology.org/typeerror-expected-string-or-bytes-like-object/
+# Terminal andis "float" errorit, ehk leidsin rohu https://www.statology.org/typeerror-expected-string-or-bytes-like-object/
 """
 def clean_kirj(name):
     return re.sub(r"\[.*\]", "", name).strip()
@@ -57,14 +58,12 @@ def clean_kirj(name):
 df['deficiency_description'] = df['deficiency_description'].apply(clean_kirj)
 print(df)
 
-# Duplikaadid minema https://www.geeksforgeeks.org/pandas/how-to-drop-rows-with-nan-values-in-pandas-dataframe/
+# Duplikaadid minema, kust vaja https://www.geeksforgeeks.org/pandas/how-to-drop-rows-with-nan-values-in-pandas-dataframe/
 df = df.dropna(subset=['inspection_id', 'deficiency_code'])
 df = df.drop_duplicates(subset=['inspection_id', 'deficiency_code'])
 
 # Maksumus ühel kujul, teised NaN ja hind suurem kui 0 https://www.geeksforgeeks.org/python/python-pandas-to_numeric-method/
-# Regex ka siia https://regex101.com
-df['est_rectification_cost_eur'] = re.
-
+# Regex aitaks ka siin, sest väärtustest on sees tähti, kuid on juba hilja - https://regex101.com
 df['est_rectification_cost_eur'] = pd.to_numeric(df['est_rectification_cost_eur'], errors='coerce')
 df = df[df['est_rectification_cost_eur'] > 0]
 
@@ -117,3 +116,5 @@ tabel = df.groupby('deficiency_description').agg({
 tabel['riskiskoor'] = tabel['deficiency_description'] * tabel['est_rectification_cost_eur']
 tabel = tabel.sort_values(by='riskiskoor', ascending=False)
 print(tabel.head(10))
+
+# KOKKUVÕTTEKS: Palju ringe ümber pudru ja kõht ikka tühi. Eeltöötlus jäi poolikuks lõpuks ikkagi, GIGO. 
